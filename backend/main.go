@@ -1,23 +1,32 @@
 package main
 
 import (
-	database "backend/pkg/db" // Import the database package
+	database "backend/pkg/database"
+	"backend/routes"
 	"log"
+
+	"github.com/gofiber/fiber/v2"
 )
 
 func main() {
 	// Initialize the database connection
-	db, err := database.Connect()
-	if err != nil {
+	if err := database.Connect(); err != nil {
 		log.Fatalf("Failed to connect to the database: %v", err)
 	}
-	defer db.Close()
+	defer database.DB.Close()
 
-	// Run database migrations
-	if err := database.RunMigrations(db); err != nil {
+	// Run migrations
+	if err := database.RunMigrations(database.DB); err != nil {
 		log.Fatalf("Failed to run migrations: %v", err)
 	}
 
-	log.Println("Server is running...")
-	// Add server initialization code here (e.g., starting an HTTP server)
+	// Create a new Fiber app
+	app := fiber.New()
+
+	// Register routes
+	routes.RegisterRoutes(app)
+
+	// Start the server
+	log.Println("Server is running on http://localhost:8080")
+	log.Fatal(app.Listen(":8080"))
 }
